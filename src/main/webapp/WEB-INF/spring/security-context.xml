@@ -9,28 +9,31 @@
 		class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
 
 	<security:http>
+		<!-- 회원 -->
+		<security:intercept-url pattern="/member/login" access="permitAll" />
+		<security:intercept-url pattern="/member/signup" access="permitAll" />
+		<security:intercept-url pattern="/member/idCheck" access="permitAll" />
+
 		<!-- 게시판 권한 설정 -->
 		<security:intercept-url pattern="/board/register" access="isAuthenticated()" />
 		<security:intercept-url pattern="/board/modify" access="isAuthenticated()" />
 		<security:intercept-url pattern="/board/remove" access="isAuthenticated()" />
-		
-		<!-- 기본 폼 로그인 (회원 팀원이 커스터마이즈 예정) -->
-		<security:form-login />
-		<security:logout />
+
+		<security:form-login login-page="/member/login"
+			authentication-failure-url="/member/login?error"
+			default-target-url="/board/list" />
+
+		<security:logout logout-url="/logout"
+			logout-success-url="/member/login?logout"
+			invalidate-session="true" delete-cookies="JSESSIONID" />
+
+		<security:access-denied-handler error-page="/member/accessError" />
 	</security:http>
 
-	<!-- 임시: 인메모리 사용자 (회원 기능 구현 전 테스트용) -->
 	<security:authentication-manager>
-		<security:authentication-provider>
-			<security:user-service>
-				<!-- 테스트 계정: admin / 1234, user1 / 1234 (noop = plaintext) -->
-				<security:user name="admin" 
-					password="{noop}1234" 
-					authorities="ROLE_ADMIN,ROLE_MEMBER" />
-				<security:user name="user1" 
-					password="{noop}1234" 
-					authorities="ROLE_MEMBER" />
-			</security:user-service>
+		<security:authentication-provider
+			user-service-ref="customUserDetailsService">
+			<security:password-encoder ref="bcryptPasswordEncoder" />
 		</security:authentication-provider>
 	</security:authentication-manager>
 

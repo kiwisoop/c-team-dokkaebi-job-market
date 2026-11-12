@@ -19,7 +19,7 @@
       <div class="util-menu">
         <div class="acct">
           <sec:authorize access="isAuthenticated()">
-            <span class="user-name"><sec:authentication property="principal.username"/>님</span>
+            <span class="user-name"><sec:authentication property="principal.member.username"/>님</span>
             <form action="<c:url value='/logout'/>" method="post" style="display:inline;">
               <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
               <a href="#" onclick="this.closest('form').submit();return false;">로그아웃</a>

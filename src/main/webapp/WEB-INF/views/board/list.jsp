@@ -20,10 +20,11 @@
       <div class="util-menu">
         <div class="acct">
           <sec:authorize access="isAnonymous()">
-            <a href="<c:url value='/login'/>">로그인</a>
+            <a href="<c:url value='/member/login'/>">로그인</a>
+            <a href="<c:url value='/member/signup'/>">회원가입</a>
           </sec:authorize>
           <sec:authorize access="isAuthenticated()">
-            <span class="user-name"><sec:authentication property="principal.username"/>님</span>
+            <span class="user-name"><sec:authentication property="principal.member.username"/>님</span>
             <form action="<c:url value='/logout'/>" method="post" style="display:inline;">
               <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
               <a href="#" onclick="this.closest('form').submit();return false;">로그아웃</a>
@@ -134,7 +135,7 @@
         <a class="btn" id="write-btn" href="<c:url value='/board/register'/>">글쓰기</a>
       </sec:authorize>
       <sec:authorize access="isAnonymous()">
-        <a class="btn" id="write-btn" href="<c:url value='/login'/>">글쓰기</a>
+        <a class="btn" id="write-btn" href="<c:url value='/member/login'/>">글쓰기</a>
       </sec:authorize>
     </div>
   </div>

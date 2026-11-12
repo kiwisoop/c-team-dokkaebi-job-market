@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dokkaebi.mapper.MemberMapper">
+
+    <resultMap type="com.dokkaebi.domain.MemberVO" id="memberMap">
+        <id property="userid" column="userid"/>
+        <result property="userid" column="userid"/>
+        <result property="userpw" column="userpw"/>
+        <result property="username" column="username"/>
+        <result property="email" column="email"/>
+        <result property="enabled" column="enabled"/>
+        <result property="regdate" column="regdate"/>
+        <result property="updatedate" column="updatedate"/>
+        <collection property="authList" resultMap="authMap"/>
+    </resultMap>
+
+    <resultMap type="com.dokkaebi.domain.AuthVO" id="authMap">
+        <result property="userid" column="userid"/>
+        <result property="auth" column="auth"/>
+    </resultMap>
+
+    <select id="read" resultMap="memberMap">
+        SELECT m.userid, m.userpw, m.username, m.email, m.enabled, m.regdate, m.updatedate, a.auth
+        FROM tbl_member m
+        LEFT JOIN tbl_member_auth a ON m.userid = a.userid
+        WHERE m.userid = #{userid}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO tbl_member (userid, userpw, username, email)
+        VALUES (#{userid}, #{userpw}, #{username}, #{email})
+    </insert>
+
+    <insert id="insertAuth">
+        INSERT INTO tbl_member_auth (userid, auth)
+        VALUES (#{userid}, #{auth})
+    </insert>
+
+    <select id="countByUserid" resultType="int">
+        SELECT COUNT(*) FROM tbl_member WHERE LOWER(userid) = LOWER(#{userid})
+    </select>
+
+    <select id="countByEmail" resultType="int">
+        SELECT COUNT(*) FROM tbl_member WHERE LOWER(email) = LOWER(#{email})
+    </select>
+
+</mapper>

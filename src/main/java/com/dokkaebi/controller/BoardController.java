@@ -1,6 +1,8 @@
 package com.dokkaebi.controller;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,7 +48,9 @@ public class BoardController {
     
     @PostMapping("/register")
     @PreAuthorize("isAuthenticated()")
-    public String register(BoardVO board, RedirectAttributes rttr) {
+    public String register(BoardVO board, Authentication auth, RedirectAttributes rttr) {
+        // 작성자는 폼 값이 아니라 로그인 사용자로 고정 (위조 방지)
+        board.setWriter(auth.getName());
         log.info("register: " + board);
         
         service.register(board);
@@ -56,17 +60,31 @@ public class BoardController {
         return "redirect:/board/list";
     }
     
-    @GetMapping({"/get", "/modify"})
+    @GetMapping("/get")
     public void get(@RequestParam("bno") Long bno, @ModelAttribute("cri") Criteria cri, Model model) {
-        log.info("/get or modify");
+        log.info("/get");
         
         model.addAttribute("board", service.get(bno));
     }
     
-    @PreAuthorize("principal.username == #board.writer or hasRole('ROLE_ADMIN')")
+    @GetMapping("/modify")
+    @PreAuthorize("isAuthenticated()")
+    public void modifyForm(@RequestParam("bno") Long bno, @ModelAttribute("cri") Criteria cri,
+            Authentication auth, Model model) {
+        log.info("/modify");
+        
+        BoardVO board = service.get(bno);
+        checkOwner(board, auth);
+        model.addAttribute("board", board);
+    }
+    
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/modify")
-    public String modify(BoardVO board, @ModelAttribute("cri") Criteria cri, RedirectAttributes rttr) {
+    public String modify(BoardVO board, @ModelAttribute("cri") Criteria cri, Authentication auth, RedirectAttributes rttr) {
         log.info("modify: " + board);
+        
+        // 작성자 검증은 폼 값이 아니라 DB에 저장된 작성자 기준
+        checkOwner(service.get(board.getBno()), auth);
         
         if (service.modify(board)) {
             rttr.addFlashAttribute("result", "success");
@@ -80,11 +98,13 @@ public class BoardController {
         return "redirect:/board/list";
     }
     
-    @PreAuthorize("principal.username == #writer or hasRole('ROLE_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/remove")
-    public String remove(@RequestParam("bno") Long bno, @RequestParam("writer") String writer, 
-            @ModelAttribute("cri") Criteria cri, RedirectAttributes rttr) {
+    public String remove(@RequestParam("bno") Long bno, 
+            @ModelAttribute("cri") Criteria cri, Authentication auth, RedirectAttributes rttr) {
         log.info("remove..." + bno);
+        
+        checkOwner(service.get(bno), auth);
         
         if (service.remove(bno)) {
             rttr.addFlashAttribute("result", "success");
@@ -96,5 +116,13 @@ public class BoardController {
         rttr.addAttribute("keyword", cri.getKeyword());
         
         return "redirect:/board/list";
+    }
+    
+    private void checkOwner(BoardVO board, Authentication auth) {
+        boolean admin = auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        if (board == null || !(admin || auth.getName().equals(board.getWriter()))) {
+            throw new AccessDeniedException("게시글에 대한 권한이 없습니다.");
+        }
     }
 }

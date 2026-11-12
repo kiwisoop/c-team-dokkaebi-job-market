@@ -50,4 +50,7 @@
 
 	<context:component-scan
 		base-package="com.dokkaebi.service"></context:component-scan>
+
+	<context:component-scan
+		base-package="com.dokkaebi.security"></context:component-scan>
 </beans>
